@@ -1,6 +1,6 @@
+// functions/config.js
 export default {
   async fetch(request, env, ctx) {
-    // Fungsi ini hanya akan mengirimkan variabel yang aman untuk diekspos di sisi klien.
     const clientConfig = {
       apiKey: env.VITE_FIREBASE_API_KEY,
       authDomain: env.VITE_FIREBASE_AUTH_DOMAIN,
