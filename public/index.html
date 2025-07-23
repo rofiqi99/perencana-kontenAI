@@ -292,6 +292,68 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
     background-color: var(--bg-button-hover);
 }
 
+/* --- CSS untuk Animasi Checklist Hijau --- */
+.checkmark-container {
+    width: 64px; /* Sesuaikan ukuran dengan w-16 h-16 */
+    height: 64px;
+    display: block;
+    stroke-width: 2;
+    stroke: #ffffff;
+    stroke-miterlimit: 10;
+    margin: 0 auto;
+    box-shadow: inset 0px 0px 0px #4caf50;
+    animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+}
+
+.checkmark__circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 2;
+    stroke-miterlimit: 10;
+    stroke: #4caf50;
+    fill: none;
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark__check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes scale {
+    0%, 100% {
+        transform: none;
+    }
+    50% {
+        transform: scale3d(1.1, 1.1, 1);
+    }
+}
+
+@keyframes fill {
+    100% {
+        box-shadow: inset 0px 0px 0px 32px #4caf50; /* Setengah dari tinggi/lebar */
+    }
+}
+/* --- Akhir CSS Animasi --- */
+
+/* ▼▼▼ KODE BARU UNTUK LOADING ICON PUTAR ▼▼▼ */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.icon-spinning {
+    animation: spin 1s linear infinite;
+}
+/* ▲▲▲ AKHIR KODE BARU ▲▲▲ */
+
 </style>
 </head>
 <body>
@@ -316,7 +378,7 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
                     </button>
                 </div>
                 <button id="login-btn" title="Masuk dengan Google" class="bg-white text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-100 transition-colors shadow-md flex items-center gap-2">
-    <img src="./assets/google-logo.png" alt="Google logo" class="google-logo-icon">
+    <img src="assets/google-logo.png" alt="Google logo" class="google-logo-icon">
     <span>Masuk</span>
 </button>
                 <button id="dark-mode-toggle" title="Ubah Tema" class="w-10 h-10 flex items-center justify-center font-bold rounded-lg hover:bg-slate-100 transition-colors shadow-md">
@@ -591,15 +653,25 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
         </div>
         
         <div id="info-modal" class="fixed inset-0 bg-black flex items-center justify-center p-4 hidden z-50">
-            <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full text-center modal-content-bg">
-                <div class="text-blue-500 mx-auto w-16 h-16 flex items-center justify-center bg-blue-100 rounded-full">
-                    <i class="fas fa-info-circle fa-3x"></i>
-                </div>
-                <h3 id="info-title" class="text-xl font-semibold text-slate-900 mt-6">Informasi</h3>
-                <p id="info-message" class="text-slate-600 mt-2">Pesan informasi akan muncul di sini.</p>
-                <button id="close-info-modal" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors w-full">Mengerti</button>
+    <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm w-full text-center modal-content-bg">
+        
+        <div id="info-modal-icon-container" class="w-16 h-16 mx-auto">
+            <div id="info-modal-default-icon" class="text-blue-500 w-full h-full flex items-center justify-center bg-blue-100 rounded-full">
+                <i class="fas fa-info-circle fa-3x"></i>
+            </div>
+            <div id="info-modal-success-icon" class="hidden">
+                 <svg class="checkmark-container rounded-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
             </div>
         </div>
+
+        <h3 id="info-title" class="text-xl font-semibold text-slate-900 mt-6">Informasi</h3>
+        <p id="info-message" class="text-slate-600 mt-2">Pesan informasi akan muncul di sini.</p>
+        <button id="close-info-modal" class="mt-6 bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors w-full">Mengerti</button>
+    </div>
+</div>
 
         <div id="caption-modal" class="fixed inset-0 bg-black flex items-center justify-center p-4 hidden z-40">
             <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col modal-content-bg">
@@ -924,6 +996,19 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
                 }
 
                 currentInputs = getFormInputs();
+
+                // --- LANGKAH CERDAS DIMULAI DI SINI ---
+                // Ekstrak kata kunci dari deskripsi yang panjang
+                const businessKeywords = await extractKeywords(currentInputs.description);
+                const productKeywords = await extractKeywords(currentInputs.productDescription);
+                const promoKeywords = await extractKeywords(currentInputs.promoDetails);
+
+                // Ganti deskripsi panjang dengan kata kunci yang sudah disaring
+                currentInputs.description = businessKeywords.join(', ');
+                currentInputs.productDescription = productKeywords.join(', ');
+                currentInputs.promoDetails = promoKeywords.join(', ');
+                // --- AKHIR LANGKAH CERDAS ---
+
                 const prompt = buildPlannerPrompt(currentInputs);
                 const result = await callGemini(prompt, true, plannerSchema);
                 generatedData = result.plan || [];
@@ -992,29 +1077,57 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
         const plannerSchema = { type: "OBJECT", properties: { plan: { type: "ARRAY", items: { type: "OBJECT", properties: { day: { type: "STRING" }, platform: { type: "STRING" }, pillar: { type: "STRING" }, idea: { type: "STRING" }, caption_brief: { type: "STRING" }, visual_idea: { type: "STRING" }, hashtags: { type: "STRING" } }, required: ["day", "platform", "pillar", "idea", "caption_brief", "visual_idea", "hashtags"] } } } };
         const singleIdeaSchema = { type: "OBJECT", properties: { day: { type: "STRING" }, platform: { type: "STRING" }, pillar: { type: "STRING" }, idea: { type: "STRING" }, caption_brief: { type: "STRING" }, visual_idea: { type: "STRING" }, hashtags: { type: "STRING" } }, required: ["day", "platform", "pillar", "idea", "caption_brief", "visual_idea", "hashtags"] };
         const interestSuggestionSchema = { type: "OBJECT", properties: { interests: { type: "ARRAY", items: { type: "STRING" } } }, required: ["interests"] };
+	
+	const keywordExtractionSchema = { type: "OBJECT", properties: { keywords: { type: "ARRAY", items: { type: "STRING" } } }, required: ["keywords"] };
+
+	// ▼▼▼ LETAKKAN FUNGSI ANDA DI SINI ▼▼▼
+        const extractKeywords = async (text) => {
+            if (!text || text.trim().length === 0) {
+                return []; // Kembalikan array kosong jika tidak ada teks
+            }
+
+            // Prompt ini dirancang khusus untuk ekstraksi kata kunci
+            const prompt = `Anda adalah seorang ahli strategi branding. Dari teks berikut, ekstrak 5-7 kata kunci atau frasa pendek paling penting yang mewakili esensi dari bisnis, produk, atau promosi ini. Fokus pada keunggulan, target, dan penawaran utama.
+
+Teks: "${text}"
+
+${"ATURAN MUTLAK: Balas HANYA dengan objek JSON yang valid, mengikuti skema yang diberikan."}`;
+            
+            try {
+                const result = await callGemini(prompt, true, keywordExtractionSchema);
+                return result.keywords || []; // Kembalikan array keywords
+            } catch (error) {
+                console.error("Gagal mengekstrak kata kunci:", error);
+                // Jika gagal, kembalikan array yang berisi satu string panjang sebagai fallback
+                return [text.split(' ').slice(0, 20).join(' ')]; 
+            }
+        };
 
         const callGemini = async (prompt, isJson = false, schema = null) => {
-    try {
-        const response = await fetch('/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, schema, isJson }),
-        });
+            try {
+                // Panggil backend lokal Anda di /api/generate
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, schema, isJson }),
+                });
 
-        if (!response.ok) {
-            const errorBody = await response.json();
-            console.error("API Function Error:", errorBody);
-            throw new Error(errorBody.error || `Permintaan ke server gagal dengan status ${response.status}`);
-        }
-        
-        const result = await response.json();
-        return result;
+                // PERBAIKAN: Periksa apakah respons OK SEBELUM parsing JSON
+                if (!response.ok) {
+                    // Coba baca teks error jika ada, jika tidak, gunakan status teks
+                    const errorText = await response.text();
+                    throw new Error(errorText || `Terjadi kesalahan dengan status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                return result;
 
-    } catch (error) {
-        console.error('Gagal memanggil API function:', error);
-        throw new Error(error.message || "Gagal menghubungi server AI.");
-    }
-};
+            } catch (error) {
+                console.error('Gagal memanggil API function:', error);
+                // Teruskan pesan error agar bisa ditangani di tempat lain
+                throw error;
+            }
+        };
 
         const getFormInputs = (isForStateSave = false) => {
             const isProductFocus = getEl('product-focus-toggle').checked;
@@ -1196,14 +1309,14 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
                         <button class="add-to-calendar-btn flex-grow bg-slate-100 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-200 transition-colors text-sm">
                             <i class="fas fa-calendar-plus mr-2"></i>Jadwalkan
                         </button>
-                        <button class="regenerate-idea-btn w-full mt-2 bg-slate-100 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-200 transition-colors text-sm">
-                            <i class="fas fa-sync-alt mr-2"></i>Buat Ulang Ide
+                        <button class="regenerate-idea-btn w-full mt-2 bg-slate-100 text-slate-800 font-semibold py-2 px-4 rounded-lg hover:bg-slate-200 transition-colors text-sm flex items-center justify-center">
+                            <i class="fas fa-sync-alt mr-2"></i><span>Buat Ulang Ide</span>
                         </button>
                     </div>
                 `;
-                card.querySelector('.get-ai-result-btn').addEventListener('click', (e) => handleDevelopCaption(item, draft, e.currentTarget.closest('.bg-white')));
+                card.querySelector('.get-ai-result-btn').addEventListener('click', (e) => handleDevelopCaption(item, draft, e.currentTarget));
                 card.querySelector('.add-to-calendar-btn').addEventListener('click', () => showCalendarModal(item));
-                card.querySelector('.regenerate-idea-btn').addEventListener('click', (e) => handleRegenerateIdea(index, e.currentTarget.closest('.bg-white'), container, draft));
+                card.querySelector('.regenerate-idea-btn').addEventListener('click', (e) => handleRegenerateIdea(index, e.currentTarget, container, draft));
                 container.appendChild(card);
             });
         };
@@ -1244,14 +1357,17 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
             ${languageInstruction}`;
         }
 
-        const handleRegenerateIdea = async (index, cardElement, container, draft) => {
+        const handleRegenerateIdea = async (index, buttonElement, container, draft) => {
             let dataArray = draft ? draft.planData : generatedData;
             const itemToReplace = dataArray[index];
             
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'card-loading-overlay';
-            loadingOverlay.innerHTML = `<i class="fas fa-spinner fa-spin text-3xl text-purple-500"></i>`;
-            cardElement.appendChild(loadingOverlay);
+            const icon = buttonElement.querySelector('i');
+            const textSpan = buttonElement.querySelector('span');
+            const originalText = textSpan.textContent;
+
+            buttonElement.disabled = true;
+            icon.classList.add('icon-spinning');
+            textSpan.textContent = 'Membuat Ulang...';
 
             try {
                 const prompt = buildRegeneratePrompt(itemToReplace);
@@ -1262,34 +1378,37 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
                 if (draft) {
                     const draftRef = doc(db, `artifacts/${appId}/users/${userId}/drafts/${draft.id}`);
                     await setDoc(draftRef, { planData: dataArray }, { merge: true });
-                    console.log("Draft updated in Firestore after regeneration.");
                 }
 
                 renderResults(dataArray, container, draft);
 
             } catch (error) {
                 console.error('Error regenerating idea:', error);
-                showErrorModal(error.message || "Gagal membuat ulang ide. Silakan coba lagi.");
-            } finally {
-                if (cardElement.contains(loadingOverlay)) {
-                    cardElement.removeChild(loadingOverlay);
+
+                // --- PERBAIKAN UX: Tampilkan pesan yang ramah ---
+                let userFriendlyMessage = "Gagal membuat ulang ide. Silakan coba lagi.";
+                if (error.message && error.message.includes("429")) {
+                    userFriendlyMessage = "Terlalu banyak permintaan! Mohon tunggu beberapa detik sebelum mencoba lagi.";
                 }
-            }
+                showErrorModal(userFriendlyMessage);
+                
+                buttonElement.disabled = false;
+                icon.classList.remove('icon-spinning');
+                textSpan.textContent = originalText;
+            } 
         };
         
-        const handleDevelopCaption = async (item, draft = null, cardElement) => {
+        const handleDevelopCaption = async (item, draft = null, buttonElement) => {
             const isDraftContext = draft !== null;
             const modalToShow = isDraftContext ? getEl('draft-ai-result-modal') : getEl('caption-modal');
             const loadingToShow = isDraftContext ? getEl('draft-caption-loading') : getEl('caption-loading');
             const contentToShow = isDraftContext ? getEl('draft-caption-content') : getEl('caption-content');
 
-            const loadingOverlay = document.createElement('div');
-            if (cardElement) {
-                loadingOverlay.className = 'card-loading-overlay';
-                loadingOverlay.innerHTML = `<i class="fas fa-spinner fa-spin text-3xl text-blue-500"></i>`;
-                cardElement.appendChild(loadingOverlay);
-            }
-            
+            // --- PERBAIKAN UX: Nonaktifkan tombol dan tampilkan status memuat ---
+            const originalButtonHTML = buttonElement.innerHTML;
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i>Memuat...`;
+
             try {
                 if (item.aiResultJson) {
                     contentToShow.innerHTML = renderAiResultFromJSON(item.aiResultJson);
@@ -1311,7 +1430,6 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
                        if (itemIndex > -1) {
                            draft.planData[itemIndex] = item;
                            await setDoc(draftRef, { planData: draft.planData }, { merge: true });
-                           console.log("Draft updated with AI result.");
                        }
                     }
                 }
@@ -1320,14 +1438,22 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
                 modalToShow.classList.remove('hidden');
 
             } catch (error) {
-                contentToShow.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                console.error('Gagal membuat caption:', error);
+                
+                // --- PERBAIKAN UX: Tampilkan pesan yang ramah untuk setiap jenis error ---
+                let userFriendlyMessage = "Oops! AI sepertinya sedang sibuk. Coba lagi beberapa saat.";
+                if (error.message && error.message.includes("429")) {
+                    userFriendlyMessage = "Terlalu banyak permintaan! AI butuh waktu untuk berpikir. Silakan tunggu beberapa detik sebelum mencoba lagi.";
+                }
+
+                contentToShow.innerHTML = `<p class="text-red-500 text-center p-4">${userFriendlyMessage}</p>`;
                 loadingToShow.classList.add('hidden');
                 contentToShow.classList.remove('hidden');
                 modalToShow.classList.remove('hidden');
             } finally {
-                if (cardElement && cardElement.contains(loadingOverlay)) {
-                    cardElement.removeChild(loadingOverlay);
-                }
+                // --- PERBAIKAN UX: Kembalikan tombol ke keadaan semula ---
+                buttonElement.disabled = false;
+                buttonElement.innerHTML = originalButtonHTML;
             }
         };
         
@@ -1375,41 +1501,27 @@ body.dark #draft-viewer-content .bg-slate-100:hover {
         };
 
         const buildCaptionPrompt = (item) => {
-            const audienceDescription = `Usia ${currentInputs.audience.age_from || 'tidak spesifik'} - ${currentInputs.audience.age_to || 'tidak spesifik'} tahun, Jenis Kelamin: ${currentInputs.audience.gender}, Minat: ${currentInputs.audience.interests || 'tidak spesifik'}`;
-            let promoInfo = "Tidak ada promosi khusus saat ini.";
-            if (currentInputs.promoDetails) {
-                promoInfo = `Saat ini ada promosi: "${currentInputs.promoDetails}".`;
-            }
+            const context = {
+                businessName: currentInputs.businessName || 'Bisnis ini',
+                description: currentInputs.description || 'Tidak ada deskripsi.',
+                audience: `Usia ${currentInputs.audience.age_from || 'tidak spesifik'} - ${currentInputs.audience.age_to || 'tidak spesifik'} tahun`,
+                goal: currentInputs.businessStage,
+                mood: currentInputs.contentMood,
+                item: item
+            };
             
-            const languageInstruction = "ATURAN MUTLAK: Seluruh teks dalam respons JSON yang Anda hasilkan HARUS dalam Bahasa Indonesia.";
+            const languageInstruction = "ATURAN MUTLAK: Seluruh teks dalam respons JSON HARUS dalam Bahasa Indonesia.";
 
-
-            return `Anda adalah seorang copywriter dan ahli strategi media sosial. Tugas Anda adalah mengembangkan brief konten berikut menjadi caption yang lengkap, menarik, dan siap untuk dipublikasikan.
-
-**Konteks Bisnis & Tujuan Utama:**
-- **Nama Bisnis:** ${currentInputs.businessName || 'Bisnis ini'}
-- **Deskripsi Bisnis:** ${currentInputs.description || 'Tidak ada deskripsi.'}
-- **Target Audiens:** ${audienceDescription}
-- **Tujuan Utama Konten:** ${currentInputs.businessStage}. Ini berarti fokusnya adalah pada ${currentInputs.businessStage === 'Kesadaran' ? 'memperkenalkan merek dan menjangkau audiens baru.' : currentInputs.businessStage === 'Interaksi' ? 'membangun hubungan dan kepercayaan.' : 'mempertahankan pelanggan dan membangun komunitas.'}
-- **Suasana Konten (Tone of Voice):** ${currentInputs.contentMood}
-
-**Informasi Promosi (Jika Ada):**
-- ${promoInfo}
-
-**Brief Konten Spesifik yang Harus Dikembangkan:**
-- **Platform:** ${item.platform}
-- **Ide Inti:** ${item.idea}
-- **Draf Awal Caption:** ${item.caption_brief}
-- **Ide Visual:** ${item.visual_idea}
-
-**Tugas Anda:**
-1.  **fullCaption:** Tulis caption lengkap dan menarik berdasarkan brief di atas. Gunakan suasana ${currentInputs.contentMood}. Akhiri dengan Call-To-Action (CTA) yang jelas dan sesuai dengan tujuan konten (${currentInputs.businessStage}). Jika ada promosi, sebutkan dengan jelas.
-2.  **visualSuggestion:** Berikan deskripsi yang lebih detail untuk ide visual. Jelaskan elemen-elemen kunci yang harus ada, komposisi, atau nuansa visualnya.
-3.  **videoScript:** Jika ide visual adalah video (misal: Reels, TikTok), buatlah skrip yang detail. Hasilkan sebagai array objek, di mana setiap objek mewakili satu adegan dan memiliki properti: 'scene' (misalnya, "Scene 1: Opening"), 'visual' (deskripsi visual adegan secara detail), 'onScreenText' (teks yang muncul di layar, jika ada. Kosongkan jika tidak ada), dan 'narration' (narasi atau dialog, jika ada. Kosongkan jika tidak ada). Jika bukan video, kembalikan array kosong.
-4.  **hashtags:** Berikan daftar hashtag yang relevan, campurkan antara hashtag populer dan niche. Sertakan juga hashtag merek jika memungkinkan.
-
+            return `Kembangkan brief konten ini menjadi JSON lengkap.
+Konteks: ${JSON.stringify(context)}
+Tugas:
+1.  Buat "fullCaption" menarik dengan CTA sesuai tujuan.
+2.  Buat "visualSuggestion" yang detail.
+3.  Jika visualnya video, buat "videoScript" (array of scenes). Jika bukan, array kosong.
+4.  Buat "hashtags" relevan.
+5.  PENTING: Gunakan 1-3 emoji yang relevan saja per kalimat atau paragraf. Hindari penggunaan emoji secara berlebihan.
 ${languageInstruction}
-Balas HANYA dengan objek JSON yang valid sesuai skema yang diberikan.`;
+Balas HANYA dengan objek JSON valid sesuai skema.`;
         };
 
         
@@ -1441,10 +1553,25 @@ Balas HANYA dengan objek JSON yang valid sesuai skema yang diberikan.`;
 
         // NEW: Function to show the friendly info modal
         const showInfoModal = (title, message) => {
-            getEl('info-title').textContent = title;
-            getEl('info-message').textContent = message;
-            getEl('info-modal').classList.remove('hidden');
-        };
+    // Pastikan ikon default terlihat dan ikon sukses tersembunyi
+    getEl('info-modal-default-icon').classList.remove('hidden');
+    getEl('info-modal-success-icon').classList.add('hidden');
+
+    getEl('info-title').textContent = title;
+    getEl('info-message').textContent = message;
+    getEl('info-modal').classList.remove('hidden');
+};
+
+// NEW: Function to show the info modal with success animation
+const showSuccessModal = (title, message) => {
+    // Sembunyikan ikon default dan tampilkan ikon sukses
+    getEl('info-modal-default-icon').classList.add('hidden');
+    getEl('info-modal-success-icon').classList.remove('hidden');
+
+    getEl('info-title').textContent = title;
+    getEl('info-message').textContent = message;
+    getEl('info-modal').classList.remove('hidden');
+};
 
         const resetToFormView = () => {
             getEl('loading').classList.add('hidden');
@@ -1728,40 +1855,49 @@ const displaySuggestionTags = (suggestions) => {
 
 // --- GANTI FUNGSI 'updateSuggestedTags' LAMA DENGAN YANG INI ---
 const updateSuggestedTags = async () => {
-    // 1. Ambil konteks HANYA dari tag minat yang sudah ada dan bidang usaha
-    const industry = getEl('industry').value.trim();
-    const context = (industry + ' ' + interestTags.join(' ')).trim();
-    const suggestedInterestsContainer = getEl('suggested-interests');
-    const suggestionLoader = getEl('suggestion-loader');
+            const industry = getEl('industry').value.trim().toLowerCase();
+            const suggestedInterestsContainer = getEl('suggested-interests');
+            const suggestionLoader = getEl('suggestion-loader');
 
-    // Jika tidak ada konteks sama sekali, kosongkan saran dan berhenti
-    if (!context) {
-        if(suggestedInterestsContainer) suggestedInterestsContainer.innerHTML = '';
-        return;
-    }
+            if (!suggestedInterestsContainer || !suggestionLoader) return;
 
-    // Tampilkan loader dan kosongkan saran lama
-    if(suggestionLoader) suggestionLoader.classList.remove('hidden');
-    if(suggestedInterestsContainer) suggestedInterestsContainer.innerHTML = '';
+            // Jika industri kosong, jangan lakukan apa-apa
+            if (!industry) {
+                suggestedInterestsContainer.innerHTML = '';
+                return;
+            }
 
-    try {
-        // 2. Buat prompt AI yang jelas berdasarkan konteks saat ini
-        const prompt = `Berdasarkan industri "${industry}" dan kumpulan minat ini: "${interestTags.join(', ')}", berikan 5 saran minat atau perilaku pelanggan baru yang relevan dan spesifik.`;
-        const finalPrompt = `${prompt} Balas HANYA dengan objek JSON yang valid, mengikuti skema. Seluruh teks dalam respons HARUS dalam Bahasa Indonesia.`;
-        
-        // 3. Panggil AI
-        const result = await callGemini(finalPrompt, true, interestSuggestionSchema);
-        
-        // 4. Tampilkan hasil BARU, ganti total yang lama
-        if (result && result.interests) {
-            displaySuggestionTags(result.interests); // Gunakan fungsi yang sudah ada untuk menampilkan
-        }
-    } catch (error) {
-        console.error("Gagal mendapatkan saran minat:", error);
-    } finally {
-        if(suggestionLoader) suggestionLoader.classList.add('hidden');
-    }
-};
+            // Cek apakah ada saran default untuk industri ini
+            const matchingDefaultKey = Object.keys(defaultInterestSuggestions).find(key => industry.includes(key));
+
+            suggestionLoader.classList.remove('hidden');
+            suggestedInterestsContainer.innerHTML = '';
+
+            // Jika ada saran default, langsung gunakan, JANGAN panggil AI
+            if (matchingDefaultKey) {
+                setTimeout(() => { // Beri sedikit jeda untuk simulasi loading
+                    displaySuggestionTags(defaultInterestSuggestions[matchingDefaultKey]);
+                    suggestionLoader.classList.add('hidden');
+                }, 500);
+                return; // Hentikan eksekusi di sini
+            }
+
+            // HANYA jika tidak ada saran default, baru panggil AI
+            try {
+                const prompt = `Berdasarkan industri "${industry}", berikan 5 saran minat atau hobi pelanggan yang relevan.`;
+                const finalPrompt = `${prompt} Balas HANYA dengan objek JSON yang valid, mengikuti skema. Seluruh teks dalam respons HARUS dalam Bahasa Indonesia.`;
+                
+                const result = await callGemini(finalPrompt, true, interestSuggestionSchema);
+                
+                if (result && result.interests) {
+                    displaySuggestionTags(result.interests);
+                }
+            } catch (error) {
+                console.error("Gagal mendapatkan saran minat dari AI:", error);
+            } finally {
+                suggestionLoader.classList.add('hidden');
+            }
+        };
 
         const debouncedUpdateSuggestions = debounce(updateSuggestedTags, 1200);
         
@@ -1831,9 +1967,6 @@ const updateSuggestedTags = async () => {
                 userInfo.classList.remove('hidden');
                 userInfo.classList.add('flex');
 
-                // =================================================================
-                // ▼▼▼ TAMBAHKAN BLOK KODE BARU DI SINI ▼▼▼
-                // =================================================================
                 // FIX: Mengaktifkan kembali tombol simpan jika pengguna login setelah membuat rencana.
                 if (generatedData.length > 0) {
                     const saveDraftBtn = getEl('save-draft-btn');
@@ -1842,13 +1975,10 @@ const updateSuggestedTags = async () => {
                         saveDraftBtn.innerHTML = '<i class="fas fa-save"></i>';
                         saveDraftBtn.title = "Simpan ke Draf";
                         saveDraftBtn.classList.remove('cursor-not-allowed', 'opacity-60');
-                        showInfoModal("Login Berhasil", "Silakan simpan kembali rencana Anda ke akun Google Anda agar tidak hilang.");
+                        showSuccessModal("Login Berhasil", "Silakan simpan kembali rencana Anda ke akun Google Anda agar tidak hilang.");
                     }
                 }
-                // =================================================================
-                // ▲▲▲ BATAS AKHIR KODE BARU ▲▲▲
-                // =================================================================
-
+                
                 await loadFormStateFromFirestore();
             } else {
                 // User is anonymous or logged out
@@ -1987,7 +2117,16 @@ try {
                     }
                 });
             }
-            if(saveDraftBtn) saveDraftBtn.addEventListener('click', saveCurrentPlanAsDraft);
+            if(saveDraftBtn) {
+                saveDraftBtn.addEventListener('click', () => {
+                    const user = auth.currentUser;
+                    if (user && !user.isAnonymous) {
+                        saveCurrentPlanAsDraft();
+                    } else {
+                        showInfoModal("Fitur Khusus Pengguna", "Silakan masuk dengan Google untuk menyimpan draf Anda.");
+                    }
+                });
+            }
             if(closeDraftsModalBtn) closeDraftsModalBtn.addEventListener('click', () => {
                 getEl('drafts-modal').classList.add('hidden');
                 currentDraftObject = null;
